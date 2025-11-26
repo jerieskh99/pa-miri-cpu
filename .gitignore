@@ -1,0 +1,14 @@
+# macOS
+.DS_Store
+
+# Simulation output
+sim/*.vcd
+sim/*.out
+sim/*.log
+
+# VSCode
+.vscode/
+
+# Temporary build files
+*.bak
+*.swp
