@@ -12,3 +12,9 @@ sim/*.log
 # Temporary build files
 *.bak
 *.swp
+
+
+*.vcd
+*.vvp
+*.out
+code.txt
