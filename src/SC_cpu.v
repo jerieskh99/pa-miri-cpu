@@ -12,7 +12,13 @@ module SC(
     output Branch_out,
     output ALUSrc_out,
     output jump_out,
-    output [3:0] ALUOp_out
+    output [3:0] ALUOp_out,
+    output [31:0] reg_out1,
+    output [31:0] reg_out2,
+    output [4:0] rs1_out,
+    output [4:0] rs2_out,
+    output [4:0] rd_out,
+    output [31:0] write_back_out
 );
     wire [31:0] current_pc;
 
@@ -80,6 +86,45 @@ module SC(
         .ALUOp(_ALUOp)
     );
 
+    wire [31:0] REG_OUT1;
+    wire [31:0] REG_OUT2;
+    wire [31:0] WRITE_BACK;
+
+    assign WRITE_BACK = alu_result; // For now, write back ALU result. Memory access not implemented.
+
+    regFile REGFILE(
+        .rs1(rs1),
+        .rs2(rs2),
+        .rd(rd),
+        .write_data(WRITE_BACK),
+        .RegWrite(_RegWrite),
+        .clk(clk),
+        .regout1(REG_OUT1),
+        .regout2(REG_OUT2)
+    );
+
+    wire [3:0] alu_control;
+    wire [31:0] alu_input2;
+    wire [31:0] alu_result;
+    wire alu_zero;
+
+    ALU_control ALU_CTRL(
+        .ALUOp(_ALUOp),
+        .func3(func3),
+        .func7(func7),
+        .alu_control(alu_control)
+    );
+
+    assign alu_input2 = (_ALUSrc) ? imm_I : REG_OUT2;
+
+    ALU ALU_UNIT(
+        .input1(REG_OUT1),
+        .input2(alu_input2),
+        .ALUControl(alu_control),
+        .ALUResult(alu_result),
+        .zero(alu_zero)
+    );
+
     assign next_pc = pc_plus4;
     assign curr_pc = current_pc;
     assign instruction_out = instruction;
@@ -92,5 +137,16 @@ module SC(
     assign ALUSrc_out = _ALUSrc;
     assign jump_out = _jump;
     assign ALUOp_out = _ALUOp;
+
+    assign reg_out1 = REG_OUT1;
+    assign reg_out2 = REG_OUT2;
+    assign rs1_out = rs1;
+    assign rs2_out = rs2;
+    assign rd_out = rd;
+    assign write_back_out = WRITE_BACK;
+
+    assign alu_result_out  = alu_result;
+    assign alu_zero_out    = alu_zero;
+    assign alu_control_out = alu_control;
 
 endmodule
