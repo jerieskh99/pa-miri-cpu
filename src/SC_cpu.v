@@ -18,7 +18,10 @@ module SC(
     output [4:0] rs1_out,
     output [4:0] rs2_out,
     output [4:0] rd_out,
-    output [31:0] write_back_out
+    output [31:0] write_back_out,
+    output [31:0] alu_result_out,
+    output alu_zero_out,
+    output [3:0] alu_control_out
 );
     wire [31:0] current_pc;
 
@@ -28,7 +31,7 @@ module SC(
     pc PC (
         .clk(clk),
         .reset(reset),
-        .pc_in(pc_plus4),
+        .pc_in(next_pc),
         .pc_out(current_pc)
     );
 
@@ -108,11 +111,11 @@ module SC(
     wire [31:0] alu_result;
     wire alu_zero;
 
-    ALU_control ALU_CTRL(
+    ALU_CONTROL ALU_CTRL(
         .ALUOp(_ALUOp),
         .func3(func3),
         .func7(func7),
-        .alu_control(alu_control)
+        .ALUControl(alu_control)
     );
 
     assign alu_input2 = (_ALUSrc) ? imm_I : REG_OUT2;
@@ -125,7 +128,19 @@ module SC(
         .zero(alu_zero)
     );
 
-    assign next_pc = pc_plus4;
+    wire [31:0] branch_target;
+    wire [31:0] jal_target;
+    wire        pc_branch_eq;
+
+    assign branch_target = current_pc + imm_B;
+    assign jal_target = current_pc + imm_J;
+    assign pc_branch_eq = _Branch & alu_zero;
+
+    assign next_pc = _jump ? jal_target :
+                (pc_branch_eq) ? branch_target :
+                pc_plus4;
+
+    // assign next_pc = pc_plus4;
     assign curr_pc = current_pc;
     assign instruction_out = instruction;
     assign opcode_out = opcode;
