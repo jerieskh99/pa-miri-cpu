@@ -93,7 +93,7 @@ module SC(
     wire [31:0] REG_OUT2;
     wire [31:0] WRITE_BACK;
 
-    assign WRITE_BACK = alu_result; // For now, write back ALU result. Memory access not implemented.
+    assign WRITE_BACK = _memtoReg ? MemRead_out : alu_result; // For now, write back ALU result. Memory access not implemented.
 
     regFile REGFILE(
         .rs1(rs1),
@@ -139,6 +139,16 @@ module SC(
     assign next_pc = _jump ? jal_target :
                 (pc_branch_eq) ? branch_target :
                 pc_plus4;
+
+    wire [31:0] dmem_out;
+    dmem DRAM(
+        .clk(clk),
+        .MemRead(_MemRead),
+        .MemWrite(_MemWrite),
+        .address(alu_result),
+        .write_data(REG_OUT2),
+        .read_data(dmem_out)
+    );
 
     // assign next_pc = pc_plus4;
     assign curr_pc = current_pc;
